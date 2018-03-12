@@ -311,3 +311,35 @@ exports.book_update_post = [
 		}
 	}
 ];
+
+// Display book update form on GET.
+exports.book_search = function(req, res, next) {
+  var q = req.query.q;
+  var page = Math.max(1, req.query.page||1);
+  var perPage = 3;
+  
+  console.log('Book search q:', q)
+  if(!q) {
+    return res.render('book_search', {title:'Search Book', books: {}});
+  }
+  
+  var reg = new RegExp(q, 'i');
+  var cond = {title: {$regex: reg}};
+  async.parallel({
+    books: function(callback) {
+      Book.find(cond)
+      .populate('author')
+      .skip(perPage * (page-1))
+      .limit(perPage)
+      .exec(callback);
+    },
+    count: function(callback) {
+      Book.count(cond).exec(callback);
+    }
+  },function (err, results) {
+    if (err) { return next(err); }
+    console.log('Book.find:', results);
+    console.log('Book.extra:', page, Math.ceil(results.count/perPage));
+    res.render('book_search', {title:'Search Book', q, books: results.books, page, pages: Math.ceil(results.count/perPage)});
+  });
+}

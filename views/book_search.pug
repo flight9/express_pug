@@ -1,0 +1,22 @@
+extends layout
+
+block content
+  h1= title
+  form(method='GET', action='')
+    .form-group
+      input#search.form-control(type='text', placeholder='Please enter a word to search' name='q' value=(undefined===q ? '' : q))
+      button.btn.btn-success.search_btn(type='submit') Search
+      
+  ul
+    each book in books
+      li 
+        a(href=book.url) #{book.title} 
+        | (#{book.author.name})
+
+    else
+      li There are no such books.
+
+  ul.pagination
+    - for(let i=0; i<pages; i++)
+      li(class=(i+1==page?'active':''))
+        a(href='#')= i+1
