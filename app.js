@@ -13,9 +13,8 @@ var app = express();
 
 // ZM: Set up mongoose connection
 var mongoose = require('mongoose');
-var dbURI = 'mongodb://127.0.0.1/express_pug'
-var mongoDB = dbURI;
-mongoose.connect(mongoDB);
+var dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1/express_pug'
+mongoose.connect(dbURI);
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
