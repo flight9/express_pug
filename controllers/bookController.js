@@ -340,6 +340,13 @@ exports.book_search = function(req, res, next) {
     if (err) { return next(err); }
     console.log('Book.find:', results);
     console.log('Book.extra:', page, Math.ceil(results.count/perPage));
-    res.render('book_search', {title:'Search Book', q, books: results.books, page, pages: Math.ceil(results.count/perPage)});
+    res.render('book_search', {
+      title:'Search Book', 
+      q, 
+      books: results.books, 
+      page, 
+      pages: Math.ceil(results.count/perPage),
+      page_url: req.baseUrl+ req.path+ '?q='+ q+ '&page='
+    });
   });
 }

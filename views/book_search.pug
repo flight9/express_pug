@@ -2,10 +2,10 @@ extends layout
 
 block content
   h1= title
-  form(method='GET', action='')
-    .form-group
+  form.form-inline(method='GET', action='', role='form')
+    div.form-group
       input#search.form-control(type='text', placeholder='Please enter a word to search' name='q' value=(undefined===q ? '' : q))
-      button.btn.btn-success.search_btn(type='submit') Search
+    button.btn.btn-success.search_btn(type='submit' style='margin-left:10px') Search
       
   ul
     each book in books
@@ -19,4 +19,4 @@ block content
   ul.pagination
     - for(let i=0; i<pages; i++)
       li(class=(i+1==page?'active':''))
-        a(href='#')= i+1
+        a(href=page_url+(i+1))= i+1
