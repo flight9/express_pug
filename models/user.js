@@ -3,12 +3,6 @@ var bcrypt = require('bcrypt');
 var Schema = mongoose.Schema;
 
 var UserSchema = new Schema({
-  email: {
-    type: String,
-    unique: true,
-    required: true,
-    trim: true
-  },
   username: {
     type: String,
     unique: true,
@@ -18,6 +12,18 @@ var UserSchema = new Schema({
   password: {
     type: String,
     required: true,
+  },
+  email: {
+    type: String,
+    unique: true,
+    required: true,
+    trim: true
+  },
+  mobile: {
+    type: String,
+    unique: true,
+    required: true,
+    trim: true
   }
 });
 
@@ -25,7 +31,7 @@ var UserSchema = new Schema({
 UserSchema
 .virtual('url')
 .get(function () {
-  return '/user/' + this._id;
+  return '/users/' + this._id;
 });
 
 //hashing a password before saving it to the database

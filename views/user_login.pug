@@ -1,0 +1,37 @@
+doctype html
+html
+  head
+    meta(http-equiv='Content-Type', content='text/html; charset=UTF-8')
+    title= title
+    link(rel='stylesheet', href='https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    // <link rel="stylesheet" href="./Node.js Login_files/style.css">
+  body
+    #login.center-vertical
+      form#form-login.well(method='post')
+        h2 Hello! 
+        h6 Please Login To Your Account
+        .form-group
+          label Username
+          input#user-tf.form-control(type='text', name='username')
+        .form-group
+          label Password
+          input#pass-tf.form-control(type='password', name='password')
+        .controls
+          button.btn.btn-default.button-rememember-me(type='button')
+            span.glyphicon.glyphicon-unchecked.button-rememember-me-glyph
+            | Remember Me
+          button.btn.btn-primary.button-sign-in(type='submit')
+            span.glyphicon.glyphicon-lock
+            | Sign In
+        .clearfix
+        hr
+        .btm-links
+          #forgot-password
+            a(href='#') Forgot Your Password?
+          #create-account
+            a(href='/users/signup') Create An Account
+        .clearfix
+    script(src='https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js')
+    script(src='https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js')
+

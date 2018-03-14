@@ -31,6 +31,12 @@ app.use(session({
   saveUninitialized: false
 }));
 
+// ZM: give templates access to session variables
+app.use(function(req, res, next){
+  res.locals.session = req.session;
+  next();
+});
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');

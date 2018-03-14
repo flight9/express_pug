@@ -1,3 +1,4 @@
+var bcrypt  = require('bcrypt');
 var User = require('../models/user');
 
 var async = require('async');
@@ -10,19 +11,9 @@ exports.check_auth = function restrict(req, res, next) {
     next();
   } else {
     req.session.error = 'Access denied!';
-    res.redirect('/user/login');
+    req.session.last_url = req.originalUrl;
+    res.redirect('/users/login');
   }
-}
-
-// Display list of all Authors.
-exports.user_list = function(req, res, next) {
-  User.find()
-    .sort([['username', 'descending']])
-    .exec(function (err, list_users) {
-      if (err) { return next(err); }
-      //Successful, so render
-      res.render('user_list', { title: 'User List', user_list: list_users });
-    });
 };
 
 // ZM: Display User login form on GET.
@@ -32,7 +23,7 @@ exports.user_login_get = function(req, res, next) {
 
 // ZM: help function to auth user
 function authenticate(name, pass, callback) {
-  User.findOne({ uasername: name })
+  User.findOne({ username: name })
     .exec(function (err, user) {
       if (err) { return callback(err); } 
       else if (!user) {
@@ -57,13 +48,39 @@ exports.user_login_post = function(req, res, next) {
   authenticate(req.body.username, req.body.password, function(err, user){
     if (err) { return next(err); }
     req.session.user = user;
-    res.redirect('/user/detail');
+    if( req.session.last_url) {
+      res.redirect(req.session.last_url);
+    }
+    else {
+      res.redirect('/');
+    }
   });
+}
+
+// ZM: Handle user logout
+exports.user_logout = function(req, res, next) {
+  if (req.session.user) {
+    // ALTERNATIVE 1
+    // req.session.user = null;
+    // res.redirect('/');
+    // ALTERNATIVE 2: delete session object
+    req.session.destroy(function(err) {
+      if(err) { return next(err); } 
+      else {
+        return res.redirect('/');
+      }
+    });
+  }
+  else {
+    var err = new Error('Err: You should login first.');
+    err.status = 401;
+    next(err);
+  }
 }
 
 // Display User create form on GET.
 exports.user_create_get = function(req, res, next) {
-  res.render('user_form', { title: 'Create User'});
+  res.render('user_form', { title: 'Signup'});
 };
 
 // Handle User create on POST.
@@ -73,12 +90,13 @@ exports.user_create_post = [
     .isAlphanumeric().withMessage('User name has non-alphanumeric characters.'),
   body('password').isLength({ min: 4 }).trim().withMessage('Password length must be more than 4.')
     .isAlphanumeric().withMessage('Family name has non-alphanumeric characters.'),
-  // TODO: to valide email
+  // TODO: to valide email and mobile
 
   // Sanitize fields.
   sanitizeBody('username').trim().escape(),
   sanitizeBody('password').trim().escape(),
   sanitizeBody('email').trim().escape(),
+  sanitizeBody('mobile').trim().escape(),
 
   // Process request after validation and sanitization.
   (req, res, next) => {
@@ -87,7 +105,7 @@ exports.user_create_post = [
 
     if (!errors.isEmpty()) {
       // There are errors. Render form again with sanitized values/errors messages.
-      res.render('user_form', { title: 'Create User', user: req.body, errors: errors.array() });
+      res.render('user_form', { title: 'Signup', user: req.body, errors: errors.array() });
       return;
     }
     else {
@@ -95,13 +113,139 @@ exports.user_create_post = [
       var user = new User({
         username: req.body.username,
         password: req.body.password,
-        email: req.body.email
+        email: req.body.email,
+        mobile: req.body.mobile
       });
       user.save(function (err) {
         if (err) { return next(err); }
         // Successful - redirect to new record.
-        res.redirect(user.url);
+        res.redirect('/users/login');
       });
     }
   }
 ];
+
+
+// Display list of all Users.
+exports.user_list = function(req, res, next) {
+  User.find()
+  .sort([['username', 'descending']])
+  .exec(function (err, list_users) {
+    if (err) { return next(err); }
+    //Successful, so render
+    res.render('user_list', { title: 'User List', user_list: list_users });
+  });
+};
+
+// Display detail page for a specific User.
+exports.user_detail = function(req, res, next) {
+  User.findById(req.params.id)
+  .exec(function(err, user) {
+		if (err) { return next(err); }
+		if (user==null) { // No results.
+				var err = new Error('User not found');
+				err.status = 404;
+				return next(err);
+		}
+		// Successful, so render.
+		res.render('user_detail', { title: 'User Detail', user } );
+	});
+};
+
+// Display User update form on GET.
+exports.user_update_get = function(req, res, next) {
+  User.findById(req.params.id)
+  .exec(function(err, results) {
+    if (err) { return next(err); } 
+		if (results==null) { // No results.
+      var err = new Error('User not found');
+      err.status = 404;
+      return next(err);
+		}
+		// Successful, so render.
+		res.render('user_form', { title: 'Update User', user: results });
+  });
+};
+
+// Handle User update on POST.
+exports.user_update_post = [
+  // Validate fields.
+  body('username').isLength({ min: 4 }).trim().withMessage('User name length must be more than 4.')
+    .isAlphanumeric().withMessage('User name has non-alphanumeric characters.'),
+  body('password').isLength({ min: 4 }).trim().withMessage('Password length must be more than 4.')
+    .isAlphanumeric().withMessage('Family name has non-alphanumeric characters.'),
+  // TODO: to valide email and mobile
+
+  // Sanitize fields.
+  sanitizeBody('username').trim().escape(),
+  sanitizeBody('password').trim().escape(),
+  sanitizeBody('email').trim().escape(),
+  sanitizeBody('mobile').trim().escape(),
+
+  // Process request after validation and sanitization.
+  (req, res, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // There are errors. Render form again with sanitized values/errors messages.
+      res.render('user_form', { title: 'Update User', user: req.body, errors: errors.array() });
+      return;
+    }
+    else {
+      // Data from form is valid.
+      // Authenticate again
+      authenticate(req.body.username, req.body.password, function(err, user){
+        if (err) { return next(err); }
+        
+        // Update after authenticated
+        User.findById(req.body._id, function (err, user) {
+          if(err) { return next(err); }
+          console.log('req.body.userid:', req.body._id)
+          if(user == null) {
+            var err = new Error('Err: User not found!');
+            err.status = 404;
+            return next(err);
+          }
+          user.email = req.body.email;
+          user.mobile = req.body.mobile;
+          //user.password = req.body.newpassword;
+          user.save(function (err, updatedUser) {
+            if (err) { return next(err); }
+            res.redirect(updatedUser.url);
+          });
+        });
+      });
+    }
+  }
+];
+
+// Display User delete form on GET.
+exports.user_delete_get = function(req, res, next) {
+  User.findById(req.params.id)
+	.exec( function(err, results) {
+		if (err) { return next(err); }
+		if (results==null) { // No results.
+      res.redirect('/users');
+		}
+		// Successful, so render.
+		res.render('user_delete', { title: 'Delete User', user: results } );
+	});
+};
+
+// Handle Author delete on POST.
+exports.user_delete_post = function(req, res, next) {
+  // ZM: Check if it is myself
+  if(req.session.user && req.session.user._id.toString() == req.body.userid) {
+    var err = new Error('Err: You cant delete the account of yourself!');
+    err.status = 403;
+    return next(err);
+  }
+  
+  // Delete object and redirect to the list of authors.
+  User.findByIdAndRemove(req.body.userid, function (err) {
+    if (err) { return next(err); }
+    // Success - go to list
+    res.redirect('/users')
+  });
+};

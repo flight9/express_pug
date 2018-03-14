@@ -1,0 +1,74 @@
+doctype html
+html
+  head
+    meta(http-equiv='Content-Type', content='text/html; charset=UTF-8')
+    title= title
+    link(rel='stylesheet', href='https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    // preset form values if we receive a userdata object //
+    #account-form-container.center-vertical
+      form#account-form.form-horizontal.well(method='post' action='')
+        //- store the userId on the client side in a hidden input field
+        input#userid(type='hidden', name='_id' value=(user? user._id:''))
+
+        h2= title
+        h6#sub1 Please tell us a little about yourself
+        hr
+        .form-group
+          label.control-label.col-sm-3 Mobile
+          .col-sm-9
+            input#mobile-tf.form-control(type='text', name='mobile', value=(user? user.mobile:''))
+        .form-group
+          label.control-label.col-sm-3 Email
+          .col-sm-9
+            input#email-tf.form-control(type='text', name='email', value=(user? user.email:''))
+        .form-group
+          label.control-label.col-sm-3 Location
+          .col-sm-9
+            select#country-list.form-control(name='country')
+              option Please select a country
+              option Afghanistan
+              option Albania
+              option Algeria
+              option American Samoa
+              option Andorra
+              option Angola
+              option Anguilla
+              option Antarctica
+              option Antigua and Barbuda
+              option Argentina
+              option Armenia
+              option Aruba
+              option Australia
+              option Austria
+              option Azerbaijan
+        hr
+        h6#sub2 Choose your username & password
+        .form-group
+          label.control-label.col-sm-3 Username
+          .col-sm-9
+            input#user-tf.form-control(type='text', name='username', value=(user? user.username:''), readonly=(user? true: false))
+        .form-group
+          label.control-label.col-sm-3 Password
+          .col-sm-9
+            input#pass-tf.form-control(type='password', name='password', value='')
+        hr
+        .form-buttons
+          button#account-form-btn1.btn.btn-default(type='button') Cancel
+          button#account-form-btn2.btn.btn-primary(type='submit') Submit
+        .clearfix
+    // display form errors in a custom modal window //
+    .modal-form-errors.modal.fade
+      .modal-dialog
+        .modal-content
+          .modal-header
+            button.close(data-dismiss='modal') x
+            h4 Whoops!
+          .modal-body
+            | It looks like there was a problem.
+            ul
+          .modal-footer
+            button.btn.btn-primary(data-dismiss='modal') OK
+    script(src='https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js')
+    script(src='https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js')
