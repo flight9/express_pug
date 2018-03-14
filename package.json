@@ -1,7 +1,7 @@
 {
   "name": "express-pug",
   "version": "0.0.0",
-	"engines": {
+  "engines": {
     "node": "8.9.3"
   },
   "private": true,
@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "async": "^2.6.0",
+    "bcrypt": "^1.0.3",
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.15.5",
+    "express-session": "^1.15.6",
     "express-validator": "^5.0.3",
     "moment": "^2.21.0",
     "mongoose": "^5.0.9",
