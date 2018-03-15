@@ -25,7 +25,7 @@ var UserSchema = new Schema({
     required: true,
     trim: true
   }
-});
+}, {timestamps: true});
 
 // Virtual for user's URL
 UserSchema
