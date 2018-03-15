@@ -5,8 +5,51 @@ var async = require('async');
 const { body,validationResult } = require('express-validator/check');
 const { sanitizeBody } = require('express-validator/filter');
 
-// ZM: Middleware to protect private page
-exports.check_auth = function restrict(req, res, next) {
+// ZM: Middleware to check authorized permissions (including authentication)
+function check_perm(resource) {
+  return [ check_auth, 
+    function (req, res, next) {
+      // Guess operate(action)
+      var operate, path = req.path;
+      if(path.endsWith('create')) {
+        operate = 'create';
+      }
+      else if(path.endsWith('update')) {
+        operate = 'update';
+      }
+      else if(path.endsWith('delete')) {
+        operate = 'delete';
+      }
+      else if(path.endsWith('search')) {
+        operate = 'search';
+      }
+      else {
+        operate = 'read'; // default
+      }
+      
+      // Try to get :id
+      var id = req.params.id;
+      console.log('Res id:', id);
+      console.log('Operate:', operate);
+      
+      // Call User.can()
+      var user = new User(req.session.user);
+      if( user && user.can(operate, resource, id)) {
+        next();
+      }
+      else {
+        // 401
+        var err = new Error('Operation not authorized!');
+        err.status = 401;
+        next(err);
+      }
+    }
+  ];
+}
+exports.check_perm = check_perm;
+
+// ZM: Middleware to check authenticated status
+function check_auth(req, res, next) {
   if (req.session.user) {
     next();
   } else {
@@ -15,6 +58,7 @@ exports.check_auth = function restrict(req, res, next) {
     res.redirect('/users/login');
   }
 };
+exports.check_auth = check_auth;
 
 // ZM: Display User login form on GET.
 exports.user_login_get = function(req, res, next) {
