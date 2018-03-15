@@ -90,7 +90,8 @@ var bodyPassword = body('password').isLength({ min: 4 }).trim().withMessage('Pas
   .isAlphanumeric().withMessage('Password name has non-alphanumeric characters.');
 var bodyPasswdConfirm = body('password2', 'Confirm Password field must have the same value as the password field')
     .exists().custom((value, { req }) => value === req.body.password);
-var bodyEmail = body('email').trim().isEmail().withMessage('Email must be an available email.');
+var bodyEmail = body('email').trim().isEmail().withMessage('Email is not an available email.');
+var bodyMobile = body('mobile').trim().isMobilePhone('zh-CN').withMessage('Mobile is not a valid mobile number.');
 
 // Handle User create on POST.
 exports.user_create_post = [
@@ -99,7 +100,7 @@ exports.user_create_post = [
   bodyPassword,
   bodyPasswdConfirm,
   bodyEmail,
-  // TODO: to valide mobile
+  bodyMobile,
 
   // Sanitize fields.
   sanitizeBody('username').trim().escape(),
@@ -186,7 +187,7 @@ exports.user_update_post = [
   bodyPassword.optional({ checkFalsy: true }),
   bodyPasswdConfirm.optional({ checkFalsy: true }),
   bodyEmail,
-  // TODO: to valide email and mobile
+  bodyMobile,
 
   // Sanitize fields.
   sanitizeBody('username').trim().escape(),
