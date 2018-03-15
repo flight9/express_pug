@@ -83,19 +83,28 @@ exports.user_create_get = function(req, res, next) {
   res.render('user_form', { title: 'Signup'});
 };
 
+// Valid rules
+var bodyUsername = body('username').isLength({ min: 4 }).trim().withMessage('User name length must be more than 4.')
+  .isAlphanumeric().withMessage('User name has non-alphanumeric characters.');
+var bodyPassword = body('password').isLength({ min: 4 }).trim().withMessage('Password length must be more than 4.')
+  .isAlphanumeric().withMessage('Password name has non-alphanumeric characters.');
+var bodyPasswdConfirm = body('password2', 'Confirm Password field must have the same value as the password field')
+    .exists().custom((value, { req }) => value === req.body.password);
+var bodyEmail = body('email').trim().isEmail().withMessage('Email must be an available email.');
+
 // Handle User create on POST.
 exports.user_create_post = [
   // Validate fields.
-  body('username').isLength({ min: 4 }).trim().withMessage('User name length must be more than 4.')
-    .isAlphanumeric().withMessage('User name has non-alphanumeric characters.'),
-  body('password').isLength({ min: 4 }).trim().withMessage('Password length must be more than 4.')
-    .isAlphanumeric().withMessage('Family name has non-alphanumeric characters.'),
-  // TODO: to valide email and mobile
+  bodyUsername,
+  bodyPassword,
+  bodyPasswdConfirm,
+  bodyEmail,
+  // TODO: to valide mobile
 
   // Sanitize fields.
   sanitizeBody('username').trim().escape(),
   sanitizeBody('password').trim().escape(),
-  sanitizeBody('email').trim().escape(),
+  sanitizeBody('email').trim().normalizeEmail(),
   sanitizeBody('mobile').trim().escape(),
 
   // Process request after validation and sanitization.
@@ -163,21 +172,25 @@ exports.user_update_get = function(req, res, next) {
       return next(err);
 		}
 		// Successful, so render.
-		res.render('user_form', { title: 'Update User', user: results });
+		res.render('user_form', { title: 'Update User', user: results, updating: true });
   });
 };
+
+var bodyPasswordExist = body('password0').isLength({ min: 4 }).trim().withMessage('Existing Password length must be more than 4.');
 
 // Handle User update on POST.
 exports.user_update_post = [
   // Validate fields.
-  body('username').isLength({ min: 4 }).trim().withMessage('User name length must be more than 4.')
-    .isAlphanumeric().withMessage('User name has non-alphanumeric characters.'),
-  body('password').isLength({ min: 4 }).trim().withMessage('Password length must be more than 4.')
-    .isAlphanumeric().withMessage('Family name has non-alphanumeric characters.'),
+  bodyPasswordExist,
+  bodyUsername,
+  bodyPassword.optional({ checkFalsy: true }),
+  bodyPasswdConfirm.optional({ checkFalsy: true }),
+  bodyEmail,
   // TODO: to valide email and mobile
 
   // Sanitize fields.
   sanitizeBody('username').trim().escape(),
+  sanitizeBody('password0').trim().escape(),
   sanitizeBody('password').trim().escape(),
   sanitizeBody('email').trim().escape(),
   sanitizeBody('mobile').trim().escape(),
@@ -189,19 +202,18 @@ exports.user_update_post = [
 
     if (!errors.isEmpty()) {
       // There are errors. Render form again with sanitized values/errors messages.
-      res.render('user_form', { title: 'Update User', user: req.body, errors: errors.array() });
+      res.render('user_form', { title: 'Update User', user: req.body, updating: true, errors: errors.array() });
       return;
     }
     else {
       // Data from form is valid.
       // Authenticate again
-      authenticate(req.body.username, req.body.password, function(err, user){
+      authenticate(req.body.username, req.body.password0, function(err, user){
         if (err) { return next(err); }
         
         // Update after authenticated
         User.findById(req.body._id, function (err, user) {
           if(err) { return next(err); }
-          console.log('req.body.userid:', req.body._id)
           if(user == null) {
             var err = new Error('Err: User not found!');
             err.status = 404;
@@ -209,6 +221,10 @@ exports.user_update_post = [
           }
           user.email = req.body.email;
           user.mobile = req.body.mobile;
+          if(req.body.password) {
+            // If new password then update it
+            user.password = req.body.password;
+          }
           //user.password = req.body.newpassword;
           user.save(function (err, updatedUser) {
             if (err) { return next(err); }

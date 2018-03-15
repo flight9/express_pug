@@ -49,15 +49,31 @@ html
           label.control-label.col-sm-3 Username
           .col-sm-9
             input#user-tf.form-control(type='text', name='username', value=(user? user.username:''), readonly=(user? true: false))
+        if updating
+          .form-group
+            label.control-label.col-sm-3 *Existing Password
+            .col-sm-9
+              input#pass0-tf.form-control(type='password', name='password0', value='')
         .form-group
-          label.control-label.col-sm-3 Password
+          label.control-label.col-sm-3= (updating?'New ':'')+ 'Password'
           .col-sm-9
             input#pass-tf.form-control(type='password', name='password', value='')
+        .form-group
+          label.control-label.col-sm-3 Confirm Password
+          .col-sm-9
+            input#pass2-tf.form-control(type='password', name='password2', value='')
         hr
         .form-buttons
           button#account-form-btn1.btn.btn-default(type='button') Cancel
           button#account-form-btn2.btn.btn-primary(type='submit') Submit
         .clearfix
+        
+        if errors
+          p Error:
+          ul
+            for error in errors
+              li!= error.msg
+    
     // display form errors in a custom modal window //
     .modal-form-errors.modal.fade
       .modal-dialog
