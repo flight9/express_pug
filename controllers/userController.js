@@ -5,7 +5,7 @@ var async = require('async');
 const { body,validationResult } = require('express-validator/check');
 const { sanitizeBody } = require('express-validator/filter');
 
-// ZM: Middleware to check authorized permissions (including authentication)
+// ZM: Middleware to check authorized permissions (including check_auth)
 function check_perm(resource) {
   return [ check_auth, 
     function (req, res, next) {
@@ -17,6 +17,9 @@ function check_perm(resource) {
       else if(path.endsWith('update')) {
         operate = 'update';
       }
+      else if(path.endsWith('updaterole')) {
+        operate = 'updaterole';
+      }
       else if(path.endsWith('delete')) {
         operate = 'delete';
       }
@@ -27,21 +30,24 @@ function check_perm(resource) {
         operate = 'read'; // default
       }
       
-      // Try to get :id
+      // Try to get parameters 
       var id = req.params.id;
+      var user = new User(req.session.user);
+      var err401 = new Error('Operation not authorized!');
+      err401.status = 401;
       console.log('Res id:', id);
       console.log('Operate:', operate);
       
-      // Call User.can()
-      var user = new User(req.session.user);
-      if( user && user.can(operate, resource, id)) {
-        next();
+      if(id && operate=='updaterole') {
+        //NOTE async query to get target obj and pass as last param into can() for 'updaterole'
+        User.findById(id).exec(function(err, obj) {
+          if(err) { return next(err); }
+          user.can(operate, resource, obj)? next(): next(err401);
+        });
       }
       else {
-        // 401
-        var err = new Error('Operation not authorized!');
-        err.status = 401;
-        next(err);
+        //Only sync pass id into can() for other operates
+        user.can(operate, resource, id)? next(): next(err401);
       }
     }
   ];
@@ -58,7 +64,7 @@ function check_auth(req, res, next) {
     res.redirect('/users/login');
   }
 };
-exports.check_auth = check_auth;
+// exports.check_auth = check_auth;
 
 // ZM: Display User login form on GET.
 exports.user_login_get = function(req, res, next) {
@@ -252,11 +258,11 @@ exports.user_update_post = [
     }
     else {
       // Data from form is valid.
-      // Authenticate again
+      // Check password again
       authenticate(req.body.username, req.body.password0, function(err, user){
         if (err) { return next(err); }
         
-        // Update after authenticated
+        // Update after check password
         User.findById(req.body._id, function (err, user) {
           if(err) { return next(err); }
           if(user == null) {
@@ -270,7 +276,6 @@ exports.user_update_post = [
             // If new password then update it
             user.password = req.body.password;
           }
-          //user.password = req.body.newpassword;
           user.save(function (err, updatedUser) {
             if (err) { return next(err); }
             res.redirect(updatedUser.url);
@@ -310,3 +315,37 @@ exports.user_delete_post = function(req, res, next) {
     res.redirect('/users')
   });
 };
+
+// Display User updateRole form on GET.
+exports.user_updaterole_get = function(req, res, next) {
+  User.findById(req.params.id)
+  .exec(function(err, user) {
+    if (err) { return next(err); } 
+		if (user==null) { // No results.
+      var err = new Error('User not found');
+      err.status = 404;
+      return next(err);
+		}
+		// Successful, so render.
+    allRoles = User.allRoles();
+		res.render('user_role', { title: 'Update Role', user, allRoles});
+  });
+};
+
+// Handle User updaterole on POST.
+exports.user_updaterole_post = function (req, res, next) {
+    // Update without check password
+    User.findById(req.body._id, function (err, user) {
+      if(err) { return next(err); }
+      if(user == null) {
+        var err = new Error('Err: User not found!');
+        err.status = 404;
+        return next(err);
+      }
+      user.roles = (typeof req.body.roles==='undefined') ? [] : req.body.roles;
+      user.save(function (err, updatedUser) {
+        if (err) { return next(err); }
+        res.redirect(updatedUser.url);
+      });
+    });
+  };

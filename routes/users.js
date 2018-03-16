@@ -22,6 +22,10 @@ router.post('/:id/update', CPU, userController.user_update_post);
 router.get('/:id/delete', CPU, userController.user_delete_get);
 router.post('/:id/delete', CPU, userController.user_delete_post);
 
+// GET/POST request to updaterole.
+router.get('/:id/updaterole', CPU, userController.user_updaterole_get);
+router.post('/:id/updaterole', CPU, userController.user_updaterole_post);
+
 /* GET users listing. */
 router.get('/:id', CPU, userController.user_detail);
 router.get('/', CPU, userController.user_list); // NOTE: This must be last

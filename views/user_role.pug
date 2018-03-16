@@ -1,0 +1,26 @@
+extends layout
+
+block content
+  h1= title
+  
+  h3 User: #{user.username}
+  p Id: #{user._id}
+  p Mobile: #{user.mobile}
+  p Email: #{user.email}
+
+  form(method='POST' action='')
+    div.form-group
+      input#id.form-control(type='hidden', name='_id', required='true', value=user._id )
+    div.form-group
+      label Roles:
+      div
+        for role in allRoles
+          div(style='display: inline; padding-right:10px;')
+            input.checkbox-input(type='checkbox', name='roles', id=role, value=role, checked=(user.roles.indexOf(role)>-1?true:false) ) 
+            label(for=role)= role
+    button.btn.btn-primary(type='submit') Submit
+
+  if errors 
+    ul
+      for error in errors
+        li!= error.msg

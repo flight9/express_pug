@@ -13,7 +13,7 @@ rbac.attach = function (UserSchema) {
     roles: {type:[ String ], default:[]},
   });
 
-  UserSchema.methods.can = function (operate, resource, resourceId) {
+  UserSchema.methods.can = function (operate, resource, resourceInfo) {
     var roles = this.roles,
       allows,
       _can = false;
@@ -29,7 +29,7 @@ rbac.attach = function (UserSchema) {
 
     // check customs callback func
     if (!_can) {
-      _can = config.callback(this, operate, resource, resourceId);
+      _can = config.callback(this, operate, resource, resourceInfo);
     }
 
     return _can;
@@ -37,7 +37,11 @@ rbac.attach = function (UserSchema) {
   
   UserSchema.methods.hasRole = function (role) {
     return this.roles.indexOf(role) > -1
-  }
+  };
+  
+  UserSchema.statics.allRoles = function () {
+    return 'grants' in config ? Object.keys(config.grants): [];
+  };
 };
 
 module.exports = rbac;
