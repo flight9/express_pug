@@ -10,7 +10,7 @@ rbac.attach = function (UserSchema) {
   var config = this.config;
 
   UserSchema.add({
-    roles: [ String ],
+    roles: {type:[ String ], default:[]},
   });
 
   UserSchema.methods.can = function (operate, resource, resourceId) {
@@ -34,6 +34,10 @@ rbac.attach = function (UserSchema) {
 
     return _can;
   };
+  
+  UserSchema.methods.hasRole = function (role) {
+    return this.roles.indexOf(role) > -1
+  }
 };
 
 module.exports = rbac;

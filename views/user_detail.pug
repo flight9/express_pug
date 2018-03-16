@@ -9,9 +9,12 @@ block content
   
   div(style='margin-left:20px;margin-top:20px')
 
-    h4 Privileges
-    
-    p This user has no privileges.
+    h4 Roles
+    ul
+      each role in user.roles
+        li= role
+      else
+        p This user has no roles.
       
   hr
   p

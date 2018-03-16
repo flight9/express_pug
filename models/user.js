@@ -53,34 +53,37 @@ UserSchema.pre('save', function (next) {
 // Setup rbac
 var grants = {
   'employee': {
-    'book': ['create','read'],
+    'book': ['create','read','search'],
     'author': ['read'],
     'genre': ['read'],
     'bookInstance': ['create','read'],
   },
   'manager': {
-    'book': ['create','read','update'],
+    'book': ['create','read','update','search'],
     'author': ['create','read','update'],
     'genre': ['create','read','update'],
     'bookInstance': ['create','read','update'],
     'user': ['read']
   },
   'admin': {
-    'book': ['create','read','update','delete'],
+    'book': ['create','read','update','delete','search'],
     'author': ['create','read','update','delete'],
     'genre': ['create','read','update','delete'],
     'bookInstance': ['create','read','update','delete'],
-    'user': ['create','read','update','delete']
-  }
+    'user': ['read','update','delete']
+  },
+  'superAdmin': {}
 };
 
 function surpassGrants(user, op, res, resId) {
-  if (user.roles.length == 1 && user.roles.indexOf('superAdmin')>-1) {
+  if (user.hasRole('superAdmin')) {
     return true;
   } 
-  else {
-    return false;
+  else if( res == 'user' && (op=='update'||op=='read')) {
+    return (user._id.toString() == resId);
   }
+  
+  return false;
 }
 
 rbac.init({

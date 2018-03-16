@@ -44,7 +44,7 @@ router.get('/book/:id', CPB, book_controller.book_detail);
 router.get('/books', CPB, book_controller.book_list);
 
 // ZM: GET request to search on Book
-router.get('/books/search', book_controller.book_search);
+router.get('/books/search', CPB, book_controller.book_search);
 
 /// AUTHOR ROUTES ///
 

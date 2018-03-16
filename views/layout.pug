@@ -47,7 +47,8 @@ html(lang='en')
                 hr
               if session.user
                 li
-                  div= 'Hi, '+ session.user.username
+                  div Hi, 
+                    a(href='/users/'+ session.user._id)= session.user.username
                   a(href='/users/logout') Logout
               else
                 li
