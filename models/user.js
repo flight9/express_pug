@@ -80,21 +80,32 @@ var grants = {
 
 function surpassGrants(user, ope, res, resInfo) {
   if (user.hasRole('superAdmin')) {
-    // superAdmin has absolute all permissions
+    // Role superAdmin has absolute all permissions
     return true;
   } 
   else if( res == 'user') {
     if( ope=='update'||ope=='read') {
-      // user can only see and update himself by default
+      // User can ONLY see and update himself by default
       var tar_id = resInfo? resInfo: '';
       return (user._id.toString() == tar_id);
     }
     else if( user.hasRole('admin') && ope=='updaterole' ) {
-      // admin can't update the role of superAdmin user
+      //ONLY > admin can updaterole
       var User = mongoose.model('User');
-      var tar_user = (resInfo instanceof User)? resInfo: null;
-      if( tar_user) {
-        return !tar_user.hasRole('superAdmin');
+      var tar = (resInfo.obj instanceof User)? resInfo.obj: null;
+      var req = resInfo.req;
+      
+      if( tar && !tar.hasRole('superAdmin')) {
+        // Role admin can ONLY update the role of non-superAdmin user
+        if (req) {
+          if (req.method=='GET') {
+            return true;
+          }
+          else if (req.method=='POST' && req.body.roles.indexOf('superAdmin')==-1) {
+            // Role admin can ONLY assign non-superAdmin role to a user
+            return true;
+          }
+        }
       }
     }
   }

@@ -42,7 +42,8 @@ function check_perm(resource) {
         //NOTE async query to get target obj and pass as last param into can() for 'updaterole'
         User.findById(id).exec(function(err, obj) {
           if(err) { return next(err); }
-          user.can(operate, resource, obj)? next(): next(err401);
+          var info = {obj, req};
+          user.can(operate, resource, info)? next(): next(err401);
         });
       }
       else {
