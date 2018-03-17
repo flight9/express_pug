@@ -9,26 +9,11 @@ const { sanitizeBody } = require('express-validator/filter');
 function check_perm(resource) {
   return [ check_auth, 
     function (req, res, next) {
-      // Guess operate(action)
-      var operate, path = req.path;
-      if(path.endsWith('create')) {
-        operate = 'create';
-      }
-      else if(path.endsWith('update')) {
-        operate = 'update';
-      }
-      else if(path.endsWith('updaterole')) {
-        operate = 'updaterole';
-      }
-      else if(path.endsWith('delete')) {
-        operate = 'delete';
-      }
-      else if(path.endsWith('search')) {
-        operate = 'search';
-      }
-      else {
-        operate = 'read'; // default
-      }
+      // Guess operate
+      var parts = req.path.split('/');
+      var lastSegment = parts.pop() || parts.pop();  // handle potential trailing slash
+      var allOperates = User.allOperates();
+      var operate = allOperates.indexOf(lastSegment)>-1? lastSegment: 'read';
       
       // Try to get parameters 
       var id = req.params.id;
@@ -39,7 +24,7 @@ function check_perm(resource) {
       console.log('Operate:', operate);
       
       if(id && operate=='updaterole') {
-        //NOTE async query to get target obj and pass as last param into can() for 'updaterole'
+        //NOTE async query to get target obj and pass as a member of last param into can() for 'updaterole'
         User.findById(id).exec(function(err, obj) {
           if(err) { return next(err); }
           var info = {obj, req};

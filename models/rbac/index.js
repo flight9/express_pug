@@ -42,6 +42,10 @@ rbac.attach = function (UserSchema) {
   UserSchema.statics.allRoles = function () {
     return 'grants' in config ? Object.keys(config.grants): [];
   };
+  
+  UserSchema.statics.allOperates = function () {
+    return ['create','read','update','delete','search','updaterole'];
+  };
 };
 
 module.exports = rbac;
