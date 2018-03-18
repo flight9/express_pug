@@ -78,6 +78,8 @@ var grants = {
   'superAdmin': {}
 };
 
+var operates = ['create','read','update','delete','search','updaterole'];
+
 function surpassGrants(user, ope, res, resInfo) {
   if (user.hasRole('superAdmin')) {
     // Role superAdmin has absolute all permissions
@@ -116,6 +118,7 @@ function surpassGrants(user, ope, res, resInfo) {
 rbac.init({
   grants: grants,
   callback: surpassGrants,
+  operates: operates,
   schema: UserSchema
 });
 

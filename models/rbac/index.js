@@ -44,7 +44,7 @@ rbac.attach = function (UserSchema) {
   };
   
   UserSchema.statics.allOperates = function () {
-    return ['create','read','update','delete','search','updaterole'];
+    return 'operates' in config ? config.operates: [];
   };
 };
 
