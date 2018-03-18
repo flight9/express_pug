@@ -18,7 +18,7 @@ function check_perm(resource) {
       // Try to get parameters 
       var id = req.params.id;
       var user = new User(req.session.user);
-      var err401 = new Error('Operation not authorized!');
+      var err401 = new Error('Access Denied!');
       err401.status = 401;
       console.log('Res id:', id);
       console.log('Operate:', operate);
