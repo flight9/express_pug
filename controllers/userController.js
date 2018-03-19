@@ -8,9 +8,9 @@ const { sanitizeBody } = require('express-validator/filter');
 var fs = require('fs');
 var path = require('path');
 var multer = require('multer');
-var avatarPath = '/uploads/avatar/';
-var pubDir = 'public';
-var upload = multer({ dest: pubDir+ avatarPath }); // 这里 dest 相对于根目录
+var referPath = '/uploads/avatar/';
+var localBase = path.join(__basedir, 'public');
+var upload = multer({ dest: path.join(localBase, referPath) }); // 这里 dest 可以相对于根目录(也可以绝对路径)
 
 // ZM: Middleware to check authorized permissions (including check_auth)
 function check_perm(resource) {
@@ -173,7 +173,7 @@ exports.user_create_post = [
         mobile: req.body.mobile
       });
       if( req.file) {
-        user.avatar = avatarPath+ req.file.filename;
+        user.avatar = referPath+ req.file.filename;
       }
       console.log('Avator file:', req.file);
       user.save(function (err) {
@@ -227,7 +227,18 @@ exports.user_update_get = function(req, res, next) {
   });
 };
 
+// Help function
 var bodyPasswordExist = body('password0').isLength({ min: 4 }).trim().withMessage('Existing Password length must be more than 4.');
+
+// Help function to delete file
+function deleteFile(avatar_path) {
+  if (avatar_path) {
+    let del = path.join(localBase, avatar_path);
+    if (fs.existsSync(del)) {
+      fs.unlinkSync(del);
+    }
+  }
+}
 
 // Handle User update on POST.
 exports.user_update_post = [
@@ -282,13 +293,8 @@ exports.user_update_post = [
           }
           if( req.file) {
             // If new avatar then update and delete
-            if (user.avatar) {
-              let old = path.join(__basedir, pubDir, user.avatar);
-              if (fs.existsSync(old)) {
-                fs.unlinkSync(old);
-              }
-            }
-            user.avatar = avatarPath+ req.file.filename;
+            deleteFile(user.avatar);
+            user.avatar = referPath+ req.file.filename;
           }
           
           user.save(function (err, updatedUser) {
@@ -323,11 +329,22 @@ exports.user_delete_post = function(req, res, next) {
     return next(err);
   }
   
-  // Delete object and redirect to the list of authors.
-  User.findByIdAndRemove(req.body.userid, function (err) {
-    if (err) { return next(err); }
-    // Success - go to list
-    res.redirect('/users')
+  // Delete object and redirect to the list of users.
+  User.findById(req.body.userid, function (err, user) {
+    if(err) { return next(err); }
+    if(user == null) {
+      var err = new Error('Err: User not found!');
+      err.status = 404;
+      return next(err);
+    }
+    
+    // Remember to delete avatar file first.
+    deleteFile(user.avatar);
+    user.remove(function (err, delUser) {
+      if(err) { return next(err); }
+      // Success - go to list
+      res.redirect('/users');
+    });
   });
 };
 

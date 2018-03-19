@@ -6,14 +6,15 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
 
+// ZM: Determine app dir
+global.__basedir = __dirname;
+
 var index = require('./routes/index');
 var users = require('./routes/users');
 var catalog = require('./routes/catalog'); // ZM: Import routes for "catalog" area of site
 
 var app = express();
 
-// ZM: Determine app dir
-global.__basedir = __dirname;
 
 // ZM: Set up mongoose connection
 var mongoose = require('mongoose');
