@@ -25,6 +25,10 @@ var UserSchema = new Schema({
     unique: true,
     required: true,
     trim: true
+  },
+  avatar: {
+    type: String,
+    trim: true
   }
 }, {timestamps: true});
 

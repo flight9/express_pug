@@ -8,7 +8,7 @@ html
   body
     // preset form values if we receive a userdata object //
     #account-form-container.center-vertical
-      form#account-form.form-horizontal.well(method='post' action='')
+      form#account-form.form-horizontal.well(method='post' action='' enctype='multipart/form-data')
         //- store the userId on the client side in a hidden input field
         input#userid(type='hidden', name='_id' value=(user? user._id:''))
 
@@ -43,6 +43,16 @@ html
               option Australia
               option Austria
               option Azerbaijan
+        .form-group
+          label.control-label.col-sm-3 Avatar
+          .col-sm-9
+            input#avatar-tf.form-control(type='file', name='avatar')
+        .form-group
+          if user && user.avatar
+            label.control-label.col-sm-3 (existing)
+            .col-sm-9
+              img(src=user.avatar height='100px' width='70px')
+
         hr
         h6#sub2 Choose your username & password
         .form-group

@@ -5,6 +5,13 @@ var async = require('async');
 const { body,validationResult } = require('express-validator/check');
 const { sanitizeBody } = require('express-validator/filter');
 
+var fs = require('fs');
+var path = require('path');
+var multer = require('multer');
+var avatarPath = '/uploads/avatar/';
+var pubDir = 'public';
+var upload = multer({ dest: pubDir+ avatarPath }); // 这里 dest 相对于根目录
+
 // ZM: Middleware to check authorized permissions (including check_auth)
 function check_perm(resource) {
   return [ check_auth, 
@@ -131,6 +138,9 @@ var bodyMobile = body('mobile').trim().isMobilePhone('zh-CN').withMessage('Mobil
 
 // Handle User create on POST.
 exports.user_create_post = [
+  // Upload(NOTE: must before validators)
+  upload.single('avatar'),
+  
   // Validate fields.
   bodyUsername,
   bodyPassword,
@@ -162,6 +172,10 @@ exports.user_create_post = [
         email: req.body.email,
         mobile: req.body.mobile
       });
+      if( req.file) {
+        user.avatar = avatarPath+ req.file.filename;
+      }
+      console.log('Avator file:', req.file);
       user.save(function (err) {
         if (err) { return next(err); }
         // Successful - redirect to new record.
@@ -217,6 +231,9 @@ var bodyPasswordExist = body('password0').isLength({ min: 4 }).trim().withMessag
 
 // Handle User update on POST.
 exports.user_update_post = [
+// Upload(NOTE: must before validators)
+  upload.single('avatar'),
+
   // Validate fields.
   bodyPasswordExist,
   bodyUsername,
@@ -256,12 +273,24 @@ exports.user_update_post = [
             err.status = 404;
             return next(err);
           }
+          
           user.email = req.body.email;
           user.mobile = req.body.mobile;
           if(req.body.password) {
             // If new password then update it
             user.password = req.body.password;
           }
+          if( req.file) {
+            // If new avatar then update and delete
+            if (user.avatar) {
+              let old = path.join(__basedir, pubDir, user.avatar);
+              if (fs.existsSync(old)) {
+                fs.unlinkSync(old);
+              }
+            }
+            user.avatar = avatarPath+ req.file.filename;
+          }
+          
           user.save(function (err, updatedUser) {
             if (err) { return next(err); }
             res.redirect(updatedUser.url);

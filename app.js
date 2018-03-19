@@ -12,6 +12,9 @@ var catalog = require('./routes/catalog'); // ZM: Import routes for "catalog" ar
 
 var app = express();
 
+// ZM: Determine app dir
+global.__basedir = __dirname;
+
 // ZM: Set up mongoose connection
 var mongoose = require('mongoose');
 var dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1/express_pug'
