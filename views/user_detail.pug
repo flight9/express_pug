@@ -6,6 +6,9 @@ block content
   p Email: #{user.email}
   p Mobile: #{user.mobile}
   p Location: #{user.location}
+  p Avatar: 
+    if user.avatar
+      img(src=user.avatar height='100px' width='70px')
   
   div(style='margin-left:20px;margin-top:20px')
 
