@@ -1,5 +1,7 @@
 var bcrypt  = require('bcrypt');
+var mongoose = require('mongoose');
 var User = require('../models/user');
+var Group = require('../models/group');
 
 var async = require('async');
 const { body,validationResult } = require('express-validator/check');
@@ -52,21 +54,42 @@ function check_perm(resource) {
       console.log('Operate:', operate);
       
       var what = User.whatInfoToCan(resource, operate, id);
-      if( User.groupResources.indexOf(resource) > -1) {
+      var info = {req, id};
+      console.log('whatInfoToCan what:', what, resource);
+      if( what.group || what.target) {
         // async queries to get group and target info
-      }
-      
-      if(id && operate=='updaterole') {
-        //NOTE async query to get target obj and pass as a member of last param into can() for 'updaterole'
-        User.findById(id).exec(function(err, target) {
-          if(err) { return next(err); }
-          var info = {target, req};
+        var calls = {};
+        if( what.group) {
+          var code = req.params.code;
+          console.log('gp code:', req.params);
+          if(!code) { return next(err401); }
+          calls.group = function(callback) {
+            Group.findOne({code}).exec(callback);
+          }
+        }
+        if( what.target) {
+          var ModelName = resource.capitalize();
+          var Target = mongoose.model(ModelName);
+          calls.target = function(callback) {
+            Target.findById(id).exec(callback);
+          }
+        }
+        async.parallel(calls, function(err, results) {
+          if (err) { return next(err); }
+          if (results.group) {
+            // not put into info but req (for later used by controller)
+            req.group = results.group;
+          }
+          if (results.target) {
+            info.target = results.target;
+          }
+          console.log('whatInfoToCan info:', info);
           user.can(operate, resource, info)? next(): next(err401);
         });
       }
       else {
-        //Only sync pass id into can() for other operates
-        user.can(operate, resource, {id, req})? next(): next(err401);
+        // sync pass info for other operates
+        user.can(operate, resource, info)? next(): next(err401);
       }
     }
   ];

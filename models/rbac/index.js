@@ -15,8 +15,8 @@ rbac.attach = function (UserSchema) {
 
   UserSchema.methods.can = function (operate, resource, extraInfo) {
     var roles = this.roles,
-      allows,
-      _can = false;
+      allows, _can;
+    var _resCan = true, _opeCan = false;
       
     // ZM: check whether a protected group resource
     var grs = config.groupResources;
@@ -28,28 +28,30 @@ rbac.attach = function (UserSchema) {
       
       // Must exit req group id and it should within user groups
       if(!req_gpid)  { 
-        return false; 
+        _resCan = false; 
       }
       else if(usr_gpids.indexOf(req_gpid) == -1) {
-        return false;
+        _resCan = false;
       }
       
       // If target group id exists, it should within user groups
       if(tar_gpid && usr_gpids.indexOf(tar_gpid) == -1) {
-        return false;
+        _resCan = false;
       }
     }
 
-    // check  grants
-    roles.forEach(function (role) {
-      allows = config.grants[role][resource];
-
-      if (allows && allows.indexOf(operate) > -1) {
-        _can = true;
-      }
-    });
+    // check grants
+    if(_resCan) {
+      roles.forEach(function (role) {
+        allows = config.grants[role][resource];
+        if (allows && allows.indexOf(operate) > -1) {
+          _opeCan = true;
+        }
+      });
+    }
 
     // check customs callback func
+    _can = _resCan && _opeCan;
     if (!_can) {
       _can = config.callback(this, operate, resource, extraInfo);
     }

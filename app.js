@@ -17,6 +17,11 @@ var devices = require('./routes/devices');
 
 var app = express();
 
+// ZM: Capitalize string
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+}
+
 // ZM: Set up mongoose connection
 var mongoose = require('mongoose');
 var dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1/express_pug'
