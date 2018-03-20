@@ -1,5 +1,5 @@
 var express = require('express');
-var router = express.Router({mergeParams: true});
+var router = express.Router({mergeParams: true}); // mergeParams to get nested params
 
 var groupController = require('../controllers/groupController');
 var userController = require('../controllers/userController');
