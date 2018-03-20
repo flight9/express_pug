@@ -13,10 +13,32 @@ rbac.attach = function (UserSchema) {
     roles: {type:[ String ], default:[]},
   });
 
-  UserSchema.methods.can = function (operate, resource, resourceInfo) {
+  UserSchema.methods.can = function (operate, resource, extraInfo) {
     var roles = this.roles,
       allows,
       _can = false;
+      
+    // ZM: check whether a protected group resource
+    var grs = config.groupResources;
+    if(grs && grs.indexOf(resource)>-1) {
+      var group = extraInfo.req? extraInfo.req.group: null;
+      var req_gpid = group? group._id: null;
+      var tar_gpid = extraInfo.target? extraInfo.target.group: null;
+      var usr_gpids = this.groups? this.groups: [];
+      
+      // Must exit req group id and it should within user groups
+      if(!req_gpid)  { 
+        return false; 
+      }
+      else if(usr_gpids.indexOf(req_gpid) == -1) {
+        return false;
+      }
+      
+      // If target group id exists, it should within user groups
+      if(tar_gpid && usr_gpids.indexOf(tar_gpid) == -1) {
+        return false;
+      }
+    }
 
     // check  grants
     roles.forEach(function (role) {
@@ -29,7 +51,7 @@ rbac.attach = function (UserSchema) {
 
     // check customs callback func
     if (!_can) {
-      _can = config.callback(this, operate, resource, resourceInfo);
+      _can = config.callback(this, operate, resource, extraInfo);
     }
 
     return _can;
@@ -46,6 +68,13 @@ rbac.attach = function (UserSchema) {
   UserSchema.statics.allOperates = function () {
     return 'operates' in config ? config.operates: [];
   };
+  
+  UserSchema.statics.isGroupResource = function (res) {
+    var groupResources = 'groupResources' in config ? config.groupResources: [];
+    return groupResources.indexOf(res) > -1;
+  };
+  
+  UserSchema.statics.whatInfoToCan = config.whatInfoToCan;
 };
 
 module.exports = rbac;

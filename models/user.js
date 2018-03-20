@@ -29,7 +29,11 @@ var UserSchema = new Schema({
   avatar: {
     type: String,
     trim: true
-  }
+  },
+  groups: [{
+    type: Schema.ObjectId, 
+    ref: 'Group'
+  }]
 }, {timestamps: true});
 
 // Virtual for user's URL
@@ -83,8 +87,33 @@ var grants = {
 };
 
 var operates = ['create','read','update','delete','search','updaterole'];
+var groupResources = ['device'];
 
-function surpassGrants(user, ope, res, resInfo) {
+// What info should give to Can()
+function whatInfoToCan(res, ope, id) {
+  var User = mongoose.model('User');
+  var what = {
+    group: false,
+    target: false,
+    req: true,
+    id: true,
+  };
+  
+  if (User.isGroupResource(res)) {
+    what.group = true;
+    if(id) {
+      what.target = true;
+    }
+  }
+  else if( ope == 'updaterole' && id) {
+    what.target = true;
+  }
+  
+  return what;
+}
+
+// Dynamic logic after grants
+function dynamicGrants(user, ope, res, info) {
   if (user.hasRole('superAdmin')) {
     // Role superAdmin has absolute all permissions
     return true;
@@ -92,14 +121,14 @@ function surpassGrants(user, ope, res, resInfo) {
   else if( res == 'user') {
     if( ope=='update'||ope=='read') {
       // User can ONLY see and update himself by default
-      var tar_id = resInfo? resInfo: '';
+      var tar_id = info.id? info.id: '';
       return (user._id.toString() == tar_id);
     }
     else if( user.hasRole('admin') && ope=='updaterole' ) {
       //ONLY > admin can updaterole
       var User = mongoose.model('User');
-      var tar = (resInfo.obj instanceof User)? resInfo.obj: null;
-      var req = resInfo.req;
+      var tar = (info.target instanceof User)? info.target: null;
+      var req = info.req;
       
       if( tar && !tar.hasRole('superAdmin')) {
         // Role admin can ONLY update the role of non-superAdmin user
@@ -120,9 +149,11 @@ function surpassGrants(user, ope, res, resInfo) {
 }
 
 rbac.init({
-  grants: grants,
-  callback: surpassGrants,
-  operates: operates,
+  grants,
+  callback: dynamicGrants,
+  operates,
+  groupResources,
+  whatInfoToCan,
   schema: UserSchema
 });
 

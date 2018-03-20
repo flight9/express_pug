@@ -8,7 +8,7 @@ var genre_controller = require('../controllers/genreController');
 var book_instance_controller = require('../controllers/bookinstanceController');
 var userController = require('../controllers/userController');
 
-// var CA = userController.check_auth;
+// Perms checker
 var CPB = userController.check_perm('book');
 var CPA = userController.check_perm('author');
 var CPG = userController.check_perm('genre');

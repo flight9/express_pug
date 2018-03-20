@@ -51,17 +51,22 @@ function check_perm(resource) {
       console.log('Res id:', id);
       console.log('Operate:', operate);
       
+      var what = User.whatInfoToCan(resource, operate, id);
+      if( User.groupResources.indexOf(resource) > -1) {
+        // async queries to get group and target info
+      }
+      
       if(id && operate=='updaterole') {
         //NOTE async query to get target obj and pass as a member of last param into can() for 'updaterole'
-        User.findById(id).exec(function(err, obj) {
+        User.findById(id).exec(function(err, target) {
           if(err) { return next(err); }
-          var info = {obj, req};
+          var info = {target, req};
           user.can(operate, resource, info)? next(): next(err401);
         });
       }
       else {
         //Only sync pass id into can() for other operates
-        user.can(operate, resource, id)? next(): next(err401);
+        user.can(operate, resource, {id, req})? next(): next(err401);
       }
     }
   ];
@@ -341,7 +346,7 @@ exports.user_delete_get = function(req, res, next) {
 	});
 };
 
-// Handle Author delete on POST.
+// Handle User delete on POST.
 exports.user_delete_post = function(req, res, next) {
   // ZM: Check if it is myself
   if(req.session.user && req.session.user._id.toString() == req.body.userid) {

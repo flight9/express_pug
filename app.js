@@ -12,9 +12,10 @@ global.__basedir = __dirname;
 var index = require('./routes/index');
 var users = require('./routes/users');
 var catalog = require('./routes/catalog'); // ZM: Import routes for "catalog" area of site
+var groups = require('./routes/groups');
+var devices = require('./routes/devices');
 
 var app = express();
-
 
 // ZM: Set up mongoose connection
 var mongoose = require('mongoose');
@@ -56,6 +57,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', index);
 app.use('/users', users);
 app.use('/catalog', catalog);  // ZM: Add catalog routes to middleware chain.
+app.use('/gp/:code/devices', devices);
+app.use('/gp', groups);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
