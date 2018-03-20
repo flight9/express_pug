@@ -5,12 +5,33 @@ var async = require('async');
 const { body,validationResult } = require('express-validator/check');
 const { sanitizeBody } = require('express-validator/filter');
 
+// Set up multer
 var fs = require('fs');
 var path = require('path');
 var multer = require('multer');
 var referPath = '/uploads/avatar/';
 var localBase = path.join(__basedir, 'public');
-var upload = multer({ dest: path.join(localBase, referPath) }); // 这里 dest 可以相对于根目录(也可以绝对路径)
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(localBase, referPath));
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-'+ Date.now()+ path.extname(file.originalname).toLowerCase())
+  }
+})
+var fileFilter = function (req, file, cb) {
+  var filetypes = /jpeg|jpg|png/;
+  var mimetype = filetypes.test(file.mimetype);
+  var extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  if (!mimetype || !extname) {
+    return cb(new Error('Error: File upload only supports the following filetypes - ' + filetypes));
+  }
+  return cb(null, true);
+};
+var limits = {
+  fileSize: 1*1000*1000
+};
+var upload = multer({ storage, fileFilter, limits}); // dest 可以相对于根目录(也可以绝对路径)
 
 // ZM: Middleware to check authorized permissions (including check_auth)
 function check_perm(resource) {

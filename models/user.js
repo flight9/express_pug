@@ -57,7 +57,7 @@ UserSchema.pre('save', function (next) {
 // Setup rbac
 var grants = {
   //NOTE user 'create' is designed as 'signup' and assigned to everyone(without listing)
-  //NOTE 'read' = list(with out _id) + see detail(with _id)
+  //NOTE 'read' = list(without _id) + see detail(with _id)
   'employee': {
     'book': ['create','read','search'],
     'author': ['read'],
