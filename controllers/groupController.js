@@ -1,6 +1,3 @@
-var Genre = require('../models/genre');
-var Book = require('../models/book');
-
 var Group = require('../models/group');
 var User = require('../models/user');
 
@@ -12,12 +9,12 @@ const { sanitizeBody } = require('express-validator/filter');
 // Display list of all.
 exports.group_list = function(req, res, next) {
   Group.find()
-    .sort([['name', 'ascending']])
-    .exec(function (err, group_list) {
-      if (err) { return next(err); }
-      //Successful, so render
-      res.render('group_list', { title: 'Group List', group_list});
-    });
+  .sort([['name', 'ascending']])
+  .exec(function (err, group_list) {
+    if (err) { return next(err); }
+    //Successful, so render
+    res.render('group_list', { title: 'Group List', group_list});
+  });
 };
 
 // Display detail page for a specific object.
@@ -108,7 +105,6 @@ exports.group_create_post = [
         },
       }, function(err, results) {
         if (err) { return next(err); }
-        console.log('Re render group&errors:', group, errors.array())
         // Successful, so render
         res.render('group_form', { title: 'Create Group', group, groups: results.groups, users: results.users, errors: errors.array() });
       });
@@ -207,47 +203,88 @@ exports.group_delete_post = function(req, res, next) {
 
 // Display update form on GET.
 exports.group_update_get = function(req, res, next) {
-  Genre.findById(req.params.id)
-		.exec(function (error, results) {
-      if (err) { return next(err); }
-      if (results==null) { // No results.
-        var err = new Error('Genre not found');
+  async.waterfall([
+    function(callback) {
+      Group.findOne({ code:req.params.code })
+      .exec(callback);
+    },
+    function(group, callback) {
+      if (group==null) { // No results.
+        var err = new Error('Group not found');
         err.status = 404;
-        return next(err);
+        return callback(err);
       }
-      res.render('genre_form', { title: 'Update Genre', genre: results });
-    });
+      // deep parallel
+      async.parallel({
+        groups: function(callback){
+          Group.find({_id:{$ne:group._id}}).exec(callback); //TODO: not including current
+        },
+        users: function(callback){
+          User.find().exec(callback);
+        },
+      }, function(err, results) {
+        if (err) { return callback(err); }
+        // Successful, so render
+        results.group = group;
+        callback(err, results);
+      });
+    }
+  ], function(err, results) {
+    // Successful, so render
+    res.render('group_form', { title: 'Update Group', group: results.group, groups: results.groups, users: results.users });
+  });
 };
 
 // Handle update on POST.
 exports.group_update_post = [
-	// Validate that the name field is not empty.
-	body('name', 'Genre name required').isLength({ min: 1 }).trim(),
+	// Validate fields.
+	bodyCode, bodyName, bodyBrand,
 	
 	// Sanitize (trim and escape) the name field.
+	sanitizeBody('code').trim().escape(),
 	sanitizeBody('name').trim().escape(),
+	sanitizeBody('brand').trim().escape(),
 
 	// Process request after validation and sanitization.
 	(req, res, next) => {
 		// Extract the validation errors from a request.
 		const errors = validationResult(req);
 
-		// Create a genre object with escaped and trimmed data.
-		var genre = new Genre({ 
-      name: req.body.name,
-      _id: req.params.id
-    });
-
 		if (!errors.isEmpty()) {
 			// There are errors. Render the form again with sanitized values/error messages.
-			res.render('genre_form', { title: 'Update Genre', genre: genre, errors: errors.array()});
-			return;
+      async.parallel({
+        groups: function(callback) {
+          Group.find({_id:{$ne:req.body._id}}).exec(callback); //TODO: not including current
+        },
+        users: function(callback){
+          User.find().exec(callback);
+        },
+      }, function(err, results) {
+        if (err) { return next(err); }
+        res.render('group_form', { title: 'Update Group', group: req.body, groups: results.groups, users: results.users, errors: errors.array() });
+      });
 		}
 		else {
 			// Data from form is valid. Update the record.
-      Genre.findByIdAndUpdate(req.params.id, genre, {}, function(err, theGenere){
-        if (err) { return next(err); }
-        res.redirect(theGenere.url);
+      Group.findById(req.body._id, function (err, group) {
+        if(err) { return next(err); }
+        if(group == null) {
+          var err = new Error('Err: Group not found!');
+          err.status = 404;
+          return next(err);
+        }
+        
+        group.code = req.body.code;
+        group.name = req.body.name;
+        group.parent = req.body.parent? req.body.parent: undefined;
+        group.incharge = req.body.incharge? req.body.incharge: undefined;
+        group.brand = req.body.brand;
+        group.type = req.body.type;
+        
+        group.save(function (err, updated) {
+          if (err) { return next(err); }
+          res.redirect(updated.url);
+        });
       });
 		}
 	}

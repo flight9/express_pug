@@ -43,6 +43,8 @@ block content
         option(value='facility' selected=(group!=undefined && group.type=='facility')?'selected': false) facility
         option(value='tenant' selected=(group!=undefined && group.type=='tenant')?'selected': false) tenant
         option(value='msp' selected=(group!=undefined && group.type=='msp')?'selected': false) msp
+    div.form-group
+      input#id.form-control(type='hidden', name='_id', required=group?'true':'false', value=group?group._id:'' )
         
     button.btn.btn-primary(type='submit') Submit
 
