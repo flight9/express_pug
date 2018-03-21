@@ -73,15 +73,17 @@ var grants = {
     'author': ['create','read','update'],
     'genre': ['create','read','update'],
     'bookInstance': ['create','read','update'],
-    /* here read = read others */
+    /* For user: here read = read others */
     'user': ['read']
   },
+  /* below roles are inside */
   'admin': {
     'book': ['create','read','update','delete','search'],
     'author': ['create','read','update','delete'],
     'genre': ['create','read','update','delete'],
     'bookInstance': ['create','read','update','delete'],
-    'user': ['read','update']
+    'user': ['read','update'],
+    'group': ['read','update']
   },
   'superAdmin': {}
 };
