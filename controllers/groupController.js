@@ -1,161 +1,211 @@
 var Genre = require('../models/genre');
 var Book = require('../models/book');
 
+var Group = require('../models/group');
+var User = require('../models/user');
+
 var async = require('async');
 const { body,validationResult } = require('express-validator/check');
 const { sanitizeBody } = require('express-validator/filter');
 
-exports.group_prepare = function(req, res, next) {
-  if(req.params.code) {
-    //TODO: get group document to pass to next()
-    req.group = {name:'Hello Group'};
-    next();
-  }
-  else {
-    next();
-  }
-}
 
-// Display list of all Genre.
+// Display list of all.
 exports.group_list = function(req, res, next) {
-  Genre.find()
+  Group.find()
     .sort([['name', 'ascending']])
-    .exec(function (err, list_genres) {
+    .exec(function (err, group_list) {
       if (err) { return next(err); }
       //Successful, so render
-      res.render('genre_list', { title: 'Genre List', genre_list: list_genres});
+      res.render('group_list', { title: 'Group List', group_list});
     });
 };
 
-// Display detail page for a specific Genre.
+// Display detail page for a specific object.
 exports.group_detail = function(req, res, next) {
-  async.parallel({
-			genre: function(callback) {
-					Genre.findById(req.params.id)
-						.exec(callback);
-			},
+  async.waterfall([
+    function(callback) {
+      Group.findOne({ code:req.params.code })
+      .populate('parent')
+      .populate('incharge')
+      .exec(callback);
+    },
 
-			genre_books: function(callback) {
-				Book.find({ 'genre': req.params.id })
-				.exec(callback);
-			},
-
-    }, function(err, results) {
-			if (err) { return next(err); }
-			if (results.genre==null) { // No results.
-					var err = new Error('Genre not found');
-					err.status = 404;
-					return next(err);
-			}
-			// Successful, so render
-			res.render('genre_detail', { title: 'Genre Detail', genre: results.genre, genre_books: results.genre_books } );
-    });
+    function(group, callback) {
+      if (group==null) { // No results.
+        var err = new Error('Group not found');
+        err.status = 404;
+        return callback(err);
+      } 
+      User.find({ 'groups': group._id })
+      .exec(function(err, group_users) {
+        var results = {group, group_users}
+        callback(err, results);
+      });
+    },
+  ], function(err, results) {
+    if (err) { return next(err); }
+    // Successful, so render
+    res.render('group_detail', { title: 'Group Detail', group: results.group, group_users: results.group_users } );
+  });
 };
 
-// Display Genre create form on GET.
+// Display create form on GET.
 exports.group_create_get = function(req, res, next) {
-  res.render('genre_form', { title: 'Create Genre' });
+  async.parallel({
+    groups: function(callback){
+      Group.find().exec(callback);
+    },
+    users: function(callback){
+      User.find().exec(callback);
+    },
+  }, function(err, results) {
+    if (err) { return next(err); }
+    // Successful, so render
+    res.render('group_form', { title: 'Create Group', groups: results.groups, users: results.users });
+  });
 };
 
-// Handle Genre create on POST.
+// Valid rules
+var bodyCode = body('code').isLength({ min: 3 }).trim().withMessage('Code length must be more than 3.')
+  .isAlphanumeric().withMessage('Code has non-alphanumeric characters.');
+var bodyName = body('name').isLength({ min: 3 }).trim().withMessage('Name length must be more than 3.');
+var bodyBrand = body('brand').isLength({ min: 3 }).trim().withMessage('Brand length must be more than 3.')
+  .isAlphanumeric().withMessage('Brand has non-alphanumeric characters.');
+
+// Handle create on POST.
 exports.group_create_post = [
-   
-	// Validate that the name field is not empty.
-	body('name', 'Genre name required').isLength({ min: 1 }).trim(),
+	// Validate fields.
+	bodyCode, bodyName, bodyBrand,
 	
 	// Sanitize (trim and escape) the name field.
+	sanitizeBody('code').trim().escape(),
 	sanitizeBody('name').trim().escape(),
+	sanitizeBody('brand').trim().escape(),
 
 	// Process request after validation and sanitization.
 	(req, res, next) => {
-
 		// Extract the validation errors from a request.
 		const errors = validationResult(req);
 
-		// Create a genre object with escaped and trimmed data.
-		var genre = new Genre(
-			{ name: req.body.name }
-		);
+		// Create a object with escaped and trimmed data.
+		var group = new Group({
+      code: req.body.code,
+      name: req.body.name,
+      parent: req.body.parent? req.body.parent: undefined,
+      incharge: req.body.incharge? req.body.incharge: undefined,
+      brand: req.body.brand,
+      type: req.body.type,
+		});
 
 		if (!errors.isEmpty()) {
 			// There are errors. Render the form again with sanitized values/error messages.
-			res.render('genre_form', { title: 'Create Genre', genre: genre, errors: errors.array()});
-			return;
+      async.parallel({
+        groups: function(callback){
+          Group.find().exec(callback);
+        },
+        users: function(callback){
+          User.find().exec(callback);
+        },
+      }, function(err, results) {
+        if (err) { return next(err); }
+        console.log('Re render group&errors:', group, errors.array())
+        // Successful, so render
+        res.render('group_form', { title: 'Create Group', group, groups: results.groups, users: results.users, errors: errors.array() });
+      });
 		}
 		else {
 			// Data from form is valid.
-			// Check if Genre with same name already exists.
-			Genre.findOne({ 'name': req.body.name })
-				.exec( function(err, found_genre) {
-					 if (err) { return next(err); }
-
-					 if (found_genre) {
-							 // Genre exists, redirect to its detail page.
-							 res.redirect(found_genre.url);
-					 }
-					 else {
-
-						 genre.save(function (err) {
-							 if (err) { return next(err); }
-							 // Genre saved. Redirect to genre detail page.
-							 res.redirect(genre.url);
-						 });
-					 }
-				});
+      group.save(function (err, theGroup) {
+        if (err) { return next(err); }
+        // Saved. Redirect to its detail page.
+        res.redirect(theGroup.url);
+      });
 		}
 	}
 ];
 
-// Display Genre delete form on GET.
+// Display delete form on GET.
 exports.group_delete_get = function(req, res, next) {
-  async.parallel({
-    genre: function(callback) {
-      Genre.findById(req.params.id).exec(callback);
+  async.waterfall([
+    function(callback) {
+      Group.findOne({ code:req.params.code })
+      .exec(callback);
     },
-
-    genre_books: function(callback) {
-      Book.find({'genre': req.params.id }).exec(callback);
+    function(group, callback) {
+      if (group==null) { // No results.
+        var err = new Error('Group not found');
+        err.status = 404;
+        return callback(err);
+      } 
+      User.find({ 'groups': group._id })
+      .exec(function(err, group_users) {
+        var results = {group, group_users}
+        callback(err, results);
+      });
+      //TODO: we shall also check devices dependency
+      // maybe nest a parallel call inside the waterfall call above
     },
-
-  }, function(err, results) {
+  ], function(err, results) {
     if (err) { return next(err); }
-    if (results.genre==null) { // No results.
-      res.redirect('/catalog/genres');
-    }
     // Successful, so render
-    res.render('genre_delete', { title: 'Delete Genre', genre: results.genre, genre_books: results.genre_books } );
+    res.render('group_delete', { title: 'Delete Group', group: results.group, group_users: results.group_users } );
   });
 };
 
-// Handle Genre delete on POST.
+// Handle delete on POST.
 exports.group_delete_post = function(req, res, next) {
+  async.waterfall([
+    function(callback) {
+      Group.findOne({ code:req.params.code })
+      .exec(callback);
+    },
+    function(group, callback) {
+      if (group==null) { // No results.
+        var err = new Error('Group not found');
+        err.status = 404;
+        return callback(err);
+      } 
+      User.find({ 'groups': group._id })
+      .exec(function(err, group_users) {
+        var results = {group, group_users}
+        callback(err, results);
+      });
+      //TODO: we shall also check devices dependency
+      // maybe nest a parallel call inside the waterfall call above
+    },
+  ], function(err, results) {
+    if (err) { return next(err); }
+    // Successful, so render
+    res.render('group_delete', { title: 'Delete Group', group: results.group, group_users: results.group_users } );
+  });
+  
   async.parallel({
-		genre: function(callback) {
-			Genre.findById(req.body.genreid).exec(callback)
+		group: function(callback) {
+			Group.findById(req.body._id).exec(callback)
 		},
-		genre_books: function(callback) {
-			Book.find({'genre': req.body.genreid }).exec(callback)
+		group_users: function(callback) {
+			User.find({'group': req.body._id }).exec(callback)
 		},
 	}, function(err, results) {
 		if (err) { return next(err); }
 		// Success
-		if (results.genre_books.length > 0) {
-			// Genre has books. Render in same way as for GET route.
-			res.render('genre_delete', { title: 'Delete Genre(books not empty)', genre: results.genre, genre_books: results.genre_books } );
+		if (results.group_users.length > 0) {
+			// Object has dependencies. Render in same way as for GET route.
+			res.render('group_delete', { title: 'Delete Group', group: results.group, group_users: results.group_users } );
 			return;
 		}
 		else {
-			// Genre has no books. Delete object and redirect to the list of genres.
-			Genre.findByIdAndRemove(req.body.genreid, function(err) {
-        if (err) { return next(err); }
-        // Success - go to genre list
-        res.redirect('/catalog/genres')
-			})
+			// Object has no dependencies. Delete object and redirect to the list.
+      results.group.remove(function (err, delGroup) {
+        if(err) { return next(err); }
+        // Success - go to list
+        res.redirect('/gp');
+      });
 		}
 	});
 };
 
-// Display Genre update form on GET.
+// Display update form on GET.
 exports.group_update_get = function(req, res, next) {
   Genre.findById(req.params.id)
 		.exec(function (error, results) {
@@ -169,7 +219,7 @@ exports.group_update_get = function(req, res, next) {
     });
 };
 
-// Handle Genre update on POST.
+// Handle update on POST.
 exports.group_update_post = [
 	// Validate that the name field is not empty.
 	body('name', 'Genre name required').isLength({ min: 1 }).trim(),

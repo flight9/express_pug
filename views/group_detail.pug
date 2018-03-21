@@ -1,0 +1,33 @@
+extends layout
+
+block content
+  h1 Group: #{group.name}
+  p #[strong Code:] #{group.code}
+  p #[strong Parent:] 
+    if group.parent
+      a(href=group.parent.url) #{group.parent.name}(#{group.parent.code})
+  p #[strong Incharge:] 
+    if group.incharge
+      a(href=group.incharge.url) #{group.incharge.username}
+  p #[strong Brand:] #{group.brand}
+  p #[strong Type:] #{group.type}
+  
+  div(style='margin-left:20px;margin-top:20px')
+
+    h4 Users
+    ul
+      each user in group_users
+        li: a(href=user.url) #{user.username} 
+          | (#{user.email})
+
+      else
+        p This group has no users
+    
+    h4 Devices  
+    p
+      a(href=group.url+'/devices') Device List
+  hr
+  p
+    a(href=group.url+'/update') Update Group
+  p
+    a(href=group.url+'/delete') Delete Group

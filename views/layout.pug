@@ -4,11 +4,8 @@ html(lang='en')
     title= title
     meta(charset='utf-8')
     meta(name='viewport', content='width=device-width, initial-scale=1')
-    // link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css')
     link(rel='stylesheet', href='https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css')
     link(rel='stylesheet', href='/stylesheets/style.css')
-    // script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js')
-    // script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js')
     script(src='https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js')
     script(src='https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js')
   body
@@ -30,6 +27,8 @@ html(lang='en')
               li 
                 a(href='/users') All users
               li 
+                a(href='/gp') All groups
+              li 
                 hr
               li 
                 a(href='/catalog/author/create') Create new author
@@ -39,6 +38,8 @@ html(lang='en')
                 a(href='/catalog/book/create') Create new book
               li 
                 a(href='/catalog/bookinstance/create') Create new book instance (copy)
+              li 
+                a(href='/gp/create') Create new group
               li 
                 hr
               li 

@@ -1,0 +1,28 @@
+extends layout
+
+block content
+
+  h1 Delete Group: #{group.name}
+  
+  if group_users.length
+  
+    p #[strong Delete the following users before attempting to delete this group.]
+  
+    div(style='margin-left:20px;margin-top:20px')
+
+      h4 Users
+    
+      ul
+        each user in group_users
+          li: a(href=user.url) #{user.username} 
+            | (#{user.email})
+
+  else
+    p Do you really want to delete this Group?
+    
+    form(method='POST' action='')
+      div.form-group
+        input#id.form-control(type='hidden',name='_id', required='true', value=group._id )
+
+      button.btn.btn-primary(type='submit') Delete
+
