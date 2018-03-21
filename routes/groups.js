@@ -6,8 +6,8 @@ var userController = require('../controllers/userController');
 var CPG = userController.check_perm('group');
 
 // GET/POST request to create.
-router.get('/:code/create', CPG, groupController.group_create_get);
-router.post('/:code/create', CPG, groupController.group_create_post);
+router.get('/create', CPG, groupController.group_create_get);
+router.post('/create', CPG, groupController.group_create_post);
 
 // GET/POST request to update.
 router.get('/:code/update', CPG, groupController.group_update_get);

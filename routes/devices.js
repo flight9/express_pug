@@ -6,8 +6,8 @@ var userController = require('../controllers/userController');
 var CPD = userController.check_perm('device');
 
 // GET/POST request to create.
-router.get('/:id/create', CPD, groupController.group_create_get);
-router.post('/:id/create', CPD, groupController.group_create_post);
+router.get('/create', CPD, groupController.group_create_get);
+router.post('/create', CPD, groupController.group_create_post);
 
 // GET/POST request to update.
 router.get('/:id/update', CPD, groupController.group_update_get);

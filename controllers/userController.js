@@ -53,6 +53,7 @@ function check_perm(resource) {
       console.log('Res id:', id);
       console.log('Operate:', operate);
       
+      // Prepare info and invoke can()
       var what = User.whatInfoToCan(resource, operate, id);
       var info = {req, id};
       console.log('whatInfoToCan what:', what, resource);
@@ -61,7 +62,6 @@ function check_perm(resource) {
         var calls = {};
         if( what.group) {
           var code = req.params.code;
-          console.log('gp code:', req.params);
           if(!code) { return next(err401); }
           calls.group = function(callback) {
             Group.findOne({code}).exec(callback);
@@ -77,13 +77,13 @@ function check_perm(resource) {
         async.parallel(calls, function(err, results) {
           if (err) { return next(err); }
           if (results.group) {
-            // not put into info but req (for later used by controller)
+            // not attach to info but req (for later used by controller)
             req.group = results.group;
           }
           if (results.target) {
             info.target = results.target;
           }
-          console.log('whatInfoToCan info:', info);
+          console.log('whatInfoToCan group&target:', req.group, info.target);
           user.can(operate, resource, info)? next(): next(err401);
         });
       }
@@ -249,6 +249,7 @@ exports.user_list = function(req, res, next) {
 // Display detail page for a specific User.
 exports.user_detail = function(req, res, next) {
   User.findById(req.params.id)
+  .populate('groups','name')
   .exec(function(err, user) {
 		if (err) { return next(err); }
 		if (user==null) { // No results.
@@ -399,17 +400,23 @@ exports.user_delete_post = function(req, res, next) {
 
 // Display User updateRole form on GET.
 exports.user_updaterole_get = function(req, res, next) {
-  User.findById(req.params.id)
-  .exec(function(err, user) {
+  async.parallel({
+    user: function(callback) {
+      User.findById(req.params.id).exec(callback);
+    },
+    groups: function(callback) {
+      Group.find().exec(callback);
+    }
+  }, function(err, results) {
     if (err) { return next(err); } 
-		if (user==null) { // No results.
+		if (results.user==null) { // No results.
       var err = new Error('User not found');
       err.status = 404;
       return next(err);
 		}
 		// Successful, so render.
     allRoles = User.allRoles();
-		res.render('user_role', { title: 'Update Role', user, allRoles});
+		res.render('user_role', { title: 'Update Roles & Groups', user: results.user, allRoles, allGroups: results.groups });
   });
 };
 
@@ -424,6 +431,7 @@ exports.user_updaterole_post = function (req, res, next) {
         return next(err);
       }
       user.roles = (typeof req.body.roles==='undefined') ? [] : req.body.roles;
+      user.groups = (typeof req.body.groups==='undefined') ? [] : req.body.groups;
       user.save(function (err, updatedUser) {
         if (err) { return next(err); }
         res.redirect(updatedUser.url);

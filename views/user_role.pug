@@ -18,6 +18,14 @@ block content
           div(style='display: inline; padding-right:10px;')
             input.checkbox-input(type='checkbox', name='roles', id=role, value=role, checked=(user.roles.indexOf(role)>-1?true:false) ) 
             label(for=role)= role
+    div.form-group
+      label Groups:
+      div
+        for group in allGroups
+          div(style='display: inline; padding-right:10px;')
+            input.checkbox-input(type='checkbox', name='groups', id=group.code, value=group._id, checked=(user.groups.indexOf(group._id)>-1?true:false) ) 
+            label(for=group.code)= group.name
+    
     button.btn.btn-primary(type='submit') Submit
 
   if errors 

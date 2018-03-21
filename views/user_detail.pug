@@ -18,11 +18,17 @@ block content
         li= role
       else
         p This user has no roles.
-      
+        
+    h4 Groups
+    ul
+      each group in user.groups
+        li= group.name
+      else
+        p This user has no groups.  
   hr
   p
     a(href=user.url+'/update') Update user
   p
-    a(href=user.url+'/updaterole') Update role
+    a(href=user.url+'/updaterole') Update roles & groups
   p
     a(href=user.url+'/delete') Delete user
