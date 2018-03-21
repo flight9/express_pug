@@ -431,7 +431,9 @@ exports.user_updaterole_post = function (req, res, next) {
         return next(err);
       }
       user.roles = (typeof req.body.roles==='undefined') ? [] : req.body.roles;
+      //TODO: if removed from a group, a user can't still be its incharge, how to clean thats?
       user.groups = (typeof req.body.groups==='undefined') ? [] : req.body.groups;
+      
       user.save(function (err, updatedUser) {
         if (err) { return next(err); }
         res.redirect(updatedUser.url);
