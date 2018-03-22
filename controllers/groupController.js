@@ -52,13 +52,13 @@ exports.group_create_get = function(req, res, next) {
     groups: function(callback){
       Group.find().exec(callback);
     },
-    users: function(callback){
+    /*users: function(callback){ //DEL: only members can be selected as incharge
       User.find().exec(callback);
-    },
+    },*/
   }, function(err, results) {
     if (err) { return next(err); }
     // Successful, so render
-    res.render('group_form', { title: 'Create Group', groups: results.groups, users: results.users });
+    res.render('group_form', { title: 'Create Group', groups: results.groups, users:[] });
   });
 };
 
@@ -100,13 +100,13 @@ exports.group_create_post = [
         groups: function(callback){
           Group.find().exec(callback);
         },
-        users: function(callback){
+        /*users: function(callback){ //DEL: only members can be selected as incharge
           User.find().exec(callback);
-        },
+        },*/
       }, function(err, results) {
         if (err) { return next(err); }
         // Successful, so render
-        res.render('group_form', { title: 'Create Group', group, groups: results.groups, users: results.users, errors: errors.array() });
+        res.render('group_form', { title: 'Create Group', group, groups: results.groups, users:[], errors: errors.array() });
       });
 		}
 		else {
@@ -150,37 +150,12 @@ exports.group_delete_get = function(req, res, next) {
 
 // Handle delete on POST.
 exports.group_delete_post = function(req, res, next) {
-  async.waterfall([
-    function(callback) {
-      Group.findOne({ code:req.params.code })
-      .exec(callback);
-    },
-    function(group, callback) {
-      if (group==null) { // No results.
-        var err = new Error('Group not found');
-        err.status = 404;
-        return callback(err);
-      } 
-      User.find({ 'groups': group._id })
-      .exec(function(err, group_users) {
-        var results = {group, group_users}
-        callback(err, results);
-      });
-      //TODO: we shall also check devices dependency
-      // maybe nest a parallel call inside the waterfall call above
-    },
-  ], function(err, results) {
-    if (err) { return next(err); }
-    // Successful, so render
-    res.render('group_delete', { title: 'Delete Group', group: results.group, group_users: results.group_users } );
-  });
-  
   async.parallel({
 		group: function(callback) {
 			Group.findById(req.body._id).exec(callback)
 		},
 		group_users: function(callback) {
-			User.find({'group': req.body._id }).exec(callback)
+			User.find({'groups': req.body._id }).exec(callback)
 		},
 	}, function(err, results) {
 		if (err) { return next(err); }
