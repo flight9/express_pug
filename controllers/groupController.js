@@ -192,10 +192,10 @@ exports.group_update_get = function(req, res, next) {
       // deep parallel
       async.parallel({
         groups: function(callback){
-          Group.find({_id:{$ne:group._id}}).exec(callback); //NOTE: not including current
+          Group.find({_id:{$ne:group._id}}).exec(callback); //TODO: not including current AND sub-groups
         },
         users: function(callback){
-          User.find().exec(callback); //TODO: only members can be selected as incharge
+          User.find({'groups':group._id}).exec(callback); //NOTE: only members can be selected as incharge
         },
       }, function(err, results) {
         if (err) { return callback(err); }
@@ -229,10 +229,10 @@ exports.group_update_post = [
 			// There are errors. Render the form again with sanitized values/error messages.
       async.parallel({
         groups: function(callback) {
-          Group.find({_id:{$ne:req.body._id}}).exec(callback); //NOTE: not including current
+          Group.find({_id:{$ne:req.body._id}}).exec(callback); //TODO: not including current AND sub-groups
         },
         users: function(callback){
-          User.find().exec(callback); //TODO: only members can be selected as incharge
+          User.find({'groups':req.body._id}).exec(callback); //NOTE: only members can be selected as incharge
         },
       }, function(err, results) {
         if (err) { return next(err); }
