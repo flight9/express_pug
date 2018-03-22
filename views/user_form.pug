@@ -58,7 +58,7 @@ html
         .form-group
           label.control-label.col-sm-3 Username
           .col-sm-9
-            input#user-tf.form-control(type='text', name='username', value=(user? user.username:''), readonly=(user? true: false))
+            input#user-tf.form-control(type='text', name='username', value=(user? user.username:''), readonly=(updating? true: false))
         if updating
           .form-group
             label.control-label.col-sm-3 *Existing Password
