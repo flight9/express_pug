@@ -51,6 +51,13 @@ html(lang='en')
                   div Hi, 
                     a(href='/users/'+ session.user._id)= session.user.username
                   a(href='/users/logout') Logout
+                li
+                  h5 Groups:
+                  for gp in session.user.groups
+                    div(style='display: inline; padding-right:10px;')
+                      a(href='/gp/'+gp.code)= gp.name+'('+gp.code+')'
+                  else
+                    div (No groups.)
               else
                 li
                   a(href='/users/login') Log in

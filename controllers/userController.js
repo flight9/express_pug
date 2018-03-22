@@ -116,6 +116,7 @@ exports.user_login_get = function(req, res, next) {
 // ZM: help function to auth user
 function authenticate(name, pass, callback) {
   User.findOne({ username: name })
+    .populate('groups', 'code name') // 'url' will not be populated
     .exec(function (err, user) {
       if (err) { return callback(err); } 
       else if (!user) {
