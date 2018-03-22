@@ -88,7 +88,7 @@ function check_perm(resource) {
           if (results.target) {
             info.target = results.target;
           }
-          console.log('whatInfoToCan group&target:', req.group, info.target);
+          console.log('whatInfoToCan group & target:', req.group, info.target);
           user.can(operate, resource, info)? next(): next(err401);
         });
       }

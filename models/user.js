@@ -83,7 +83,7 @@ var grants = {
     'genre': ['create','read','update','delete'],
     'bookInstance': ['create','read','update','delete'],
     'user': ['read','update'],
-    'group': ['read','update']
+    'group': ['read','create','update']
   },
   'superAdmin': {}
 };
@@ -155,6 +155,11 @@ function dynamicGrants(user, ope, res, info) {
     if (ope == 'read') {
       // User can ONLY see his groups by default
       return group? user.groups.indexOf(group._id)>-1: false;
+    }
+    else if(ope == 'update') {
+      // Group incharge user can update it
+      //NOTE: Don't use == to compare ObjectIds
+      return group&&group.incharge? String(group.incharge)==String(user._id): false;
     }
   }
   
