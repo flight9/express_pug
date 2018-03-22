@@ -14,11 +14,13 @@ rbac.attach = function (UserSchema) {
   });
 
   UserSchema.methods.can = function (operate, resource, extraInfo) {
+    console.log('Enter can():', operate, resource, this);
     var roles = this.roles,
       allows, _can;
     var _resCan = true, _opeCan = false;
       
-    // ZM: check whether a protected group resource
+    //ZM: check whether a protected group resource
+    //ZM: (we consider 'group' as a common resource, so skip check _resCan) 
     var grs = config.groupResources;
     if(grs && grs.indexOf(resource)>-1) {
       var group = extraInfo.req? extraInfo.req.group: null;
@@ -27,10 +29,10 @@ rbac.attach = function (UserSchema) {
       var usr_gpids = this.groups? this.groups: [];
       
       // Must exit req group id and it should within user groups
-      if(!req_gpid)  { 
-        _resCan = false; 
+      if(!req_gpid) {
+        _resCan = false;
       }
-      else if(usr_gpids.indexOf(req_gpid) == -1) {
+      else if( usr_gpids.indexOf(req_gpid) == -1) {
         _resCan = false;
       }
       

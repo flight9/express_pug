@@ -107,6 +107,9 @@ function whatInfoToCan(res, ope, id) {
       what.target = true;
     }
   }
+  else if( res == 'group') {
+    what.group = true;
+  }
   else if( ope == 'updaterole' && id) {
     what.target = true;
   }
@@ -116,6 +119,7 @@ function whatInfoToCan(res, ope, id) {
 
 // Dynamic logic after grants
 function dynamicGrants(user, ope, res, info) {
+  console.log('Enter dynamicGrants():', ope, res, user);
   if (user.hasRole('superAdmin')) {
     // Role superAdmin has absolute all permissions
     return true;
@@ -144,6 +148,13 @@ function dynamicGrants(user, ope, res, info) {
           }
         }
       }
+    }
+  }
+  else if( res == 'group') {
+    var group = info.req.group; //NOTE: maybe undefined when list groups
+    if (ope == 'read') {
+      // User can ONLY see his groups by default
+      return group? user.groups.indexOf(group._id)>-1: false;
     }
   }
   

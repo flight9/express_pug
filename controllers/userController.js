@@ -62,9 +62,14 @@ function check_perm(resource) {
         var calls = {};
         if( what.group) {
           var code = req.params.code;
-          if(!code) { return next(err401); }
+          console.log('Check code in check_perm():', code);
           calls.group = function(callback) {
-            Group.findOne({code}).exec(callback);
+            if(code) {
+              Group.findOne({code}).exec(callback);
+            }
+            else {
+              callback(null, undefined); //NOTE: not err but no group when list groups
+            }
           }
         }
         if( what.target) {
